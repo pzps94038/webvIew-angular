@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
                 // 耗時工作通過Coroutine-IO處理，可以透過操作flag進行回調
                 // 結束實在callBack給javascript
                 CoroutineScope(Dispatchers.Main).launch {
-                    function.onCallBack("回傳")
+                    function.onCallBack("回傳$data")
                 }
             }
         })

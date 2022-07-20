@@ -1,38 +1,32 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { Native } from './native.model';
 declare let window: Native
 @Injectable({
   providedIn: 'root'
 })
-export class NativeService {
+export class NativeService{
 
+  private _init: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   /**
    *
    * @param methodName 交互名稱
    * @param params 傳入物件
    * @param func callBackFunction
    */
-  callBridge<T = null, U = null>(methodName: string, params: T, func?: (callback: U)=> void){
+  callBridge<T = null, U = null>(methodName: string, params: U, func?: (callback: T)=> void){
     if (window.WebViewJavascriptBridge) {
-      this.bridgeInit()
-      window.WebViewJavascriptBridge.callHandler(
-        methodName
-        ,params
-        ,func
-      );
+      this.bridgeInit();
+      window.WebViewJavascriptBridge.callHandler(methodName, params, func);
     }
     else{
       document.addEventListener(
-          'WebViewJavascriptBridgeReady'
-          , ()=> {
-            this.bridgeInit()
-            window.WebViewJavascriptBridge.callHandler(
-              methodName
-              ,params
-              ,func
-            );
-          },
-          false
+        'WebViewJavascriptBridgeReady',
+        ()=> {
+          this.bridgeInit();
+          window.WebViewJavascriptBridge.callHandler(methodName, params, func);
+        },
+        false
       );
     }
   }
@@ -41,6 +35,9 @@ export class NativeService {
    * 初始化bridge，不然接不到callback
    */
   bridgeInit(){
-    window.WebViewJavascriptBridge.init()
+    if(!this._init.value){
+      window.WebViewJavascriptBridge.init();
+      this._init.next(true);
+    }
   }
 }

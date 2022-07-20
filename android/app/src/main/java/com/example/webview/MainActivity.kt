@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     private var isOpenQrcode = false // 是否開啟相機
     private var delayTime: Long = 500 // 迴圈間隔
     // web 網址
-    private val url: String = "http://172.20.10.12:4200/"
+    private val url: String = "http://172.18.240.1:4200/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binging = ActivityMainBinding.inflate(layoutInflater)

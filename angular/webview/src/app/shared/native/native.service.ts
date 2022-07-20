@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, from, Observable, Subject } from 'rxjs';
 import { Native } from './native.model';
 declare let window: Native
 @Injectable({
@@ -8,26 +8,29 @@ declare let window: Native
 export class NativeService{
 
   private _init: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
   /**
-   *
    * @param methodName 交互名稱
    * @param params 傳入物件
-   * @param func callBackFunction
    */
-  callBridge<T = null, U = null>(methodName: string, params: U, func?: (callback: T)=> void){
+  callBridge<T = null, U = null>(methodName: string, params: U){
     if (window.WebViewJavascriptBridge) {
       this.bridgeInit();
-      window.WebViewJavascriptBridge.callHandler(methodName, params, func);
+      return from(new Promise((resolve) => {
+        window.WebViewJavascriptBridge.callHandler(methodName, params, (callback)=> resolve(callback));
+      })) as Observable<T>;
     }
     else{
-      document.addEventListener(
-        'WebViewJavascriptBridgeReady',
-        ()=> {
-          this.bridgeInit();
-          window.WebViewJavascriptBridge.callHandler(methodName, params, func);
-        },
-        false
-      );
+      return from(new Promise((resolve)=>{
+        document.addEventListener(
+          'WebViewJavascriptBridgeReady',
+          ()=> {
+            this.bridgeInit();
+            window.WebViewJavascriptBridge.callHandler(methodName, params, (callback)=> resolve(callback));
+          },
+          false
+        );
+      })) as Observable<T>
     }
   }
 

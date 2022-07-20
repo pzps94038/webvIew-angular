@@ -10,8 +10,8 @@ export class AppComponent {
   title = 'webview';
   showStr= '顯示';
   constructor(private native: NativeService){
-    this.native.callBridge<string, string>('submitFromWeb', 'test', (callback)=>{
-     document.getElementById('show')!.innerText = callback
+    this.native.callBridge<string, string>('submitFromWeb', 'test').subscribe(data=>{
+      document.getElementById('show')!.innerText = data
     })
   }
 }

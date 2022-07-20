@@ -11,13 +11,19 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.webview.databinding.ActivityMainBinding
 import com.github.lzyzsd.jsbridge.BridgeHandler
 import com.github.lzyzsd.jsbridge.BridgeWebView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binging: ActivityMainBinding // xml active_main
     private lateinit var webView: BridgeWebView
+    private var isOpenQrcode = false // 是否開啟相機
+    private var delayTime: Long = 500 // 迴圈間隔
     // web 網址
-    private val url: String = "http://172.20.96.1:4200/"
+    private val url: String = "http://172.20.10.12:4200/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binging = ActivityMainBinding.inflate(layoutInflater)
@@ -52,11 +58,21 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         }
-        // web bridgeEvent
+
         webView.registerHandler("submitFromWeb",
         BridgeHandler { data, function ->
-            Log.i(TAG, "handler = submitFromWeb, data from web = $data")
-            function.onCallBack("回傳")
+            CoroutineScope(Dispatchers.IO).launch {
+                while (isOpenQrcode){
+                    delay(delayTime)
+                }
+                // 耗時工作通過Coroutine-IO處理，可以透過操作flag進行回調
+                // 結束實在callBack給javascript
+                CoroutineScope(Dispatchers.Main).launch {
+                    function.onCallBack("回傳")
+                }
+            }
         })
+        // web bridgeEvent
+
     }
 }

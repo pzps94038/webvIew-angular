@@ -3,5 +3,6 @@ export interface Handler{
   init(): void;
 }
 export interface Native{
-  WebViewJavascriptBridge: Handler
+  WebViewJavascriptBridge: Handler;
 }
+export type device = 'android' | 'ios' | 'web'

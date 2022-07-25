@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, from, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, delay, from, Observable, of, race, race, Subject, throwError, timeout } from 'rxjs';
 import { device, Native } from './native.model';
 declare let window: Native
 @Injectable({
@@ -13,20 +13,24 @@ export class NativeService{
   /**
    * @param methodName 交互名稱
    * @param params 傳入物件
+   * @param timeOut 交互超時秒數
    */
-  callBridge<T = null, U = null>(methodName: string, params?: U): Observable<T>{
+  callBridge<T = null, U = null>(methodName: string, params?: U, timeOut?: number): Observable<T>{
     const device = this.judgeDevice();
     this.setDevice(device);
-    if(device === 'web') throw new Error('not device')
+    if(device === 'web'){
+      throw new Error('not device');
+    }
     else{
+      let result: Observable<T>;
       if (window.WebViewJavascriptBridge) {
         this.bridgeInit();
-        return from(new Promise((resolve) => {
+        result = from(new Promise((resolve) => {
           window.WebViewJavascriptBridge.callHandler(methodName, params, (callback)=> resolve(callback));
         })) as Observable<T>;
       }
       else{
-        return from(new Promise((resolve)=>{
+        result = from(new Promise((resolve)=>{
           document.addEventListener(
             'WebViewJavascriptBridgeReady',
             ()=> {
@@ -37,6 +41,11 @@ export class NativeService{
           );
         })) as Observable<T>
       }
+      return result.pipe(
+        timeout({
+        each: timeOut,
+        with: () => throwError(() => new Error('Timeout'))
+      }))
     }
   }
 

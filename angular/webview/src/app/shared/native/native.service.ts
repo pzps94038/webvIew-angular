@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, delay, from, Observable, of, race, race, Subject, throwError, timeout } from 'rxjs';
+import { BehaviorSubject, delay, from, observable, Observable, of, race, race, Subject, throwError, timeout } from 'rxjs';
 import { device, Native } from './native.model';
 declare let window: Native
 @Injectable({
@@ -25,21 +25,27 @@ export class NativeService{
       let result: Observable<T>;
       if (window.WebViewJavascriptBridge) {
         this.bridgeInit();
-        result = from(new Promise((resolve) => {
-          window.WebViewJavascriptBridge.callHandler(methodName, params, (callback)=> resolve(callback));
-        })) as Observable<T>;
+        result = new Observable<T>(subscribe =>{
+          window.WebViewJavascriptBridge.callHandler<U,T>(methodName, params as U, (callback)=> {
+            subscribe.next(callback);
+            subscribe.complete();
+          })
+        });
       }
       else{
-        result = from(new Promise((resolve)=>{
+        result = new Observable<T>(subscribe =>{
           document.addEventListener(
             'WebViewJavascriptBridgeReady',
             ()=> {
               this.bridgeInit();
-              window.WebViewJavascriptBridge.callHandler(methodName, params, (callback)=> resolve(callback));
+              window.WebViewJavascriptBridge.callHandler<U,T>(methodName, params as U, (callback)=> {
+                subscribe.next(callback);
+                subscribe.complete();
+              });
             },
             false
           );
-        })) as Observable<T>
+        });
       }
       return result.pipe(
         timeout({
